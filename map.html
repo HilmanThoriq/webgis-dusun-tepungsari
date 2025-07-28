@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peta Interaktif Tepungsari</title>
+  <link rel="icon" href="./assets/img/logo-tepungsari.png" type="image/png" />
+
+  <!-- ✅ Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <style>
@@ -73,6 +76,44 @@
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
+
+    /* Custom Range Slider for Pitch */
+    .pitch-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      outline: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .pitch-slider:hover {
+      opacity: 1;
+    }
+
+    .pitch-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .pitch-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
   </style>
 
 </head>
@@ -90,7 +131,7 @@
         <p class="text-gray-300 text-sm mt-1">DUSUN TEPUNGSARI</p>
       </div>
       <button onclick="toggleSidebar()"
-        class="block text-gray-800 hover:text-gray-500 text-2xl font-bold transition duration-200">
+        class="block md:hidden text-gray-800 hover:text-gray-500 text-2xl font-bold transition duration-200">
         &times;
       </button>
 
@@ -128,7 +169,7 @@
 
       <!-- Layer Batas Administrasi -->
       <div class="glass-light rounded-xl p-5">
-        <h3 class="text-md font-semibold mb-6 text-white tracking-wide">LAYER BATAS ADMINISTRASI</h3>
+        <h3 class="text-md font-semibold mb-6 text-white">LAYER BATAS ADMINISTRASI</h3>
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-gray-200 text-sm">Batas Desa</span>
@@ -150,11 +191,31 @@
       <!-- Kontrol Peta -->
       <div class="glass-light rounded-xl p-5">
         <h3 class="text-md font-semibold mb-4 text-white tracking-wide">KONTROL PETA</h3>
-        <div class="space-y-3">
+        <div class="space-y-4">
+
+          <!-- Pitch Control -->
+          <div class="space-y-2">
+            <label class="text-white text-sm font-medium flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+              </svg>
+              Sudut Pandang
+            </label>
+            <input type="range" id="pitch-slider" class="pitch-slider" min="0" max="60" value="25"
+              oninput="updatePitch(this.value)">
+            <div class="flex justify-between text-xs text-gray-300">
+              <span>2D</span>
+              <span id="pitch-value">25°</span>
+              <span>3D</span>
+            </div>
+          </div>
+          <!-- Reset View Button -->
           <button onclick="resetView()"
             class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 font-medium">
             Tampilan Awal
           </button>
+
         </div>
       </div>
 
@@ -198,477 +259,641 @@
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiaGlsbWFudGhvcmlxIiwiYSI6ImNtZGp1enV2bjBxOWIybHM1Y21weDJpN3gifQ.MpQrD4WJZvVqrpSVqFG1QA';
 
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/satellite-v9',
-  center: [110.17638245039902, -7.565652332998015],
-  zoom: 16,
-  pitch: 45,
-  bearing: 0,
-  antialias: true,
-  scrollZoom: true
-});
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/satellite-v9',
+      center: [110.17686322658378, -7.564867932123477],
+      zoom: 16,
+      pitch: 25,
+      bearing: 0,
+      antialias: true,
+      scrollZoom: true
+    });
 
-map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+    map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
 
-const layerVisibility = {
-  'batas_dusun': true,
-  'batas_desa': true,
-  'penggunaan_lahan': false,
-  'sarana_prasarana': false,
-  'bangunan': false
-};
+    const layerVisibility = {
+      'batas_dusun': true,
+      'batas_desa': true,
+      'penggunaan_lahan': false,
+      'sarana_prasarana': false,
+      'bangunan': false
+    };
 
-// Fungsi untuk load GeoJSON dengan error handling
-async function loadGeoJSON(url) {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Fungsi untuk update pitch
+    function updatePitch(value) {
+      map.setPitch(parseInt(value));
+      document.getElementById('pitch-value').textContent = value + '°';
     }
-    return await response.json();
-  } catch (error) {
-    console.error(`Error loading ${url}:`, error);
-    throw error;
-  }
-}
 
-map.on('load', async () => {
-  map.scrollZoom.enable();
-
-  try {
-    // Load semua GeoJSON files secara parallel
-    const [
-      batasDusunGeojson,
-      batasDesaGeojson,
-      penggunaanLahanGeojson,
-      saranaPrasarana,
-      bangunanGeojson
-    ] = await Promise.all([
-      loadGeoJSON('./assets/data/BATAS_DUSUN_DESA_SUMBERARUM_WGS84.geojson'),
-      loadGeoJSON('./assets/data/BATAS_DESA_SUMBERARUM_WGS84.geojson'),
-      loadGeoJSON('./assets/data/PENGGUNAAN_LAHAN_TEPUNGSARI.geojson'),
-      loadGeoJSON('./assets/data/SARANA_PRASARANA_TEPUNGSARI.geojson'),
-      loadGeoJSON('./assets/data/BANGUNAN_TEPUNGSARI.geojson')
-    ]);
-
-    // === BATAS DESA LAYERS (Layer paling bawah) ===
-    map.addSource('batas_desa', {
-      type: 'geojson',
-      data: batasDesaGeojson
-    });
-
-    map.addLayer({
-      id: 'batas_desa',
-      type: 'line',
-      source: 'batas_desa',
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 3.5,
-        'line-opacity': 0.8
+    // Fungsi untuk load GeoJSON dengan error handling
+    async function loadGeoJSON(url) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(`Error loading ${url}:`, error);
+        throw error;
       }
-    });
+    }
 
-    map.addLayer({
-      id: 'label_desa',
-      type: 'symbol',
-      source: 'batas_desa',
-      layout: {
-        'text-field': ['get', 'NAMOBJ'],
-        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-        'text-size': 18,
-        'text-anchor': 'center',
-        'symbol-placement': 'point',
-        'text-allow-overlap': false,
-        'text-optional': true,
-        'text-max-width': 10,
-        'symbol-avoid-edges': true
-      },
-      paint: {
-        'text-color': '#FFFF00',
-        'text-halo-color': '#000000',
-        'text-halo-width': 2
-      }
-    });
+    map.on('load', async () => {
+      map.scrollZoom.enable();
 
-    // === BATAS DUSUN LAYERS ===
-    map.addSource('batas_dusun', {
-      type: 'geojson',
-      data: batasDusunGeojson
-    });
+      try {
+        // Load semua GeoJSON files secara parallel
+        const [
+          batasDusunGeojson,
+          batasDesaGeojson,
+          penggunaanLahanGeojson,
+          saranaPrasarana,
+          bangunanGeojson
+        ] = await Promise.all([
+          loadGeoJSON('./assets/data/BATAS_DUSUN_DESA_SUMBERARUM_WGS84.geojson'),
+          loadGeoJSON('./assets/data/BATAS_DESA_SUMBERARUM_WGS84.geojson'),
+          loadGeoJSON('./assets/data/PENGGUNAAN_LAHAN_TEPUNGSARI.geojson'),
+          loadGeoJSON('./assets/data/SARANA_PRASARANA_TEPUNGSARI.geojson'),
+          loadGeoJSON('./assets/data/BANGUNAN_TEPUNGSARI.geojson')
+        ]);
 
-    map.addLayer({
-      id: 'fill_dusun',
-      type: 'fill',
-      source: 'batas_dusun',
-      paint: {
-        'fill-color': '#ffffff',
-        'fill-opacity': [
-          'case',
-          ['==', ['get', 'Toponimi'], 'Dusun Tepungsari'],
-          0.2,
-          0.0
-        ]
-      }
-    });
+        // === BATAS DUSUN LAYERS (Layer paling bawah) ===
+        map.addSource('batas_dusun', {
+          type: 'geojson',
+          data: batasDusunGeojson
+        });
 
-    map.addLayer({
-      id: 'batas_dusun',
-      type: 'line',
-      source: 'batas_dusun',
-      paint: {
-        'line-color': '#ffff00',
-        'line-width': 2,
-        'line-opacity': 1
-      }
-    });
+        map.addLayer({
+          id: 'fill_dusun',
+          type: 'fill',
+          source: 'batas_dusun',
+          paint: {
+            'fill-color': '#ffffff',
+            'fill-opacity': [
+              'case',
+              ['==', ['get', 'Toponimi'], 'Dusun Tepungsari'],
+              0.2,
+              0.0
+            ]
+          }
+        });
 
-    map.addLayer({
-      id: 'label_dusun',
-      type: 'symbol',
-      source: 'batas_dusun',
-      layout: {
-        'text-field': ['get', 'Toponimi'],
-        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-        'text-size': 12,
-        'text-allow-overlap': false,
-        'text-anchor': 'center',
-        'symbol-placement': 'point',
-        'text-optional': true
-      },
-      paint: {
-        'text-color': '#FFFFFF',
-        'text-halo-color': '#1E293B',
-        'text-halo-width': 1.5,
-        'text-halo-blur': 1
-      }
-    });
+        map.addLayer({
+          id: 'batas_dusun',
+          type: 'line',
+          source: 'batas_dusun',
+          paint: {
+            'line-color': '#ffff00',
+            'line-width': 2,
+            'line-opacity': 1
+          }
+        });
 
-    // === PENGGUNAAN LAHAN LAYERS (berdasarkan KETERANGAN) ===
-    map.addSource('penggunaan_lahan', {
-      type: 'geojson',
-      data: penggunaanLahanGeojson
-    });
+        map.addLayer({
+          id: 'label_dusun',
+          type: 'symbol',
+          source: 'batas_dusun',
+          layout: {
+            'text-field': ['get', 'Toponimi'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+            'text-allow-overlap': false,
+            'text-anchor': 'center',
+            'symbol-placement': 'point',
+            'text-optional': true
+          },
+          paint: {
+            'text-color': '#FFFFFF',
+            'text-halo-color': '#1E293B',
+            'text-halo-width': 1.5,
+            'text-halo-blur': 1
+          }
+        });
 
-    map.addLayer({
-      id: 'penggunaan_lahan',
-      type: 'fill',
-      source: 'penggunaan_lahan',
-      layout: {
-        'visibility': 'none' // Default hidden
-      },
-      paint: {
-        'fill-color': [
-          'match',
-          ['get', 'KETERANGAN'], // Menggunakan field 'KETERANGAN'
-          'Hutan', '#006400',
-          'Hutan Rakyat', '#228B22',
-          'Industri dan Perdagangan', '#8B008B',
-          'Kebun Campur', '#32CD32',
-          'Lahan Terbuka (Tanah Kosong)', '#DEB887',
-          'Pekarangan', '#F0E68C',
-          'Perdagangan dan Jasa', '#FF6347',
-          'Perkebunan', '#8FBC8F',
-          'Rumput', '#7CFC00',
-          'Sawah', '#90EE90',
-          'Semak Belukar', '#9ACD32',
-          'Sungai', '#4169E1',
-          'Tegalan/Ladang', '#DAA520',
-          'Tempat Tinggal', '#FFB6C1',
-          'Transportasi', '#696969',
-          'Vegetasi Non Budidaya Lainnya', '#98FB98',
-          '#CCCCCC' // default color
-        ],
-        'fill-opacity': 0.7
-      }
-    });
+        // === BATAS DESA LAYERS (Layer di atas batas dusun) ===
+        map.addSource('batas_desa', {
+          type: 'geojson',
+          data: batasDesaGeojson
+        });
 
-    map.addLayer({
-      id: 'penggunaan_lahan_stroke',
-      type: 'line',
-      source: 'penggunaan_lahan',
-      layout: {
-        'visibility': 'none'
-      },
-      paint: {
-        'line-color': '#333333',
-        'line-width': 1,
-        'line-opacity': 0.8
-      }
-    });
+        map.addLayer({
+          id: 'batas_desa',
+          type: 'line',
+          source: 'batas_desa',
+          paint: {
+            'line-color': '#ff0000',
+            'line-width': 3.5,
+            'line-opacity': 0.8
+          }
+        });
 
-    // === BANGUNAN LAYERS (3D berdasarkan KETERANGAN) ===
-    map.addSource('bangunan', {
-      type: 'geojson',
-      data: bangunanGeojson
-    });
+        map.addLayer({
+          id: 'label_desa',
+          type: 'symbol',
+          source: 'batas_desa',
+          layout: {
+            'text-field': ['get', 'NAMOBJ'],
+            'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+            'text-size': 18,
+            'text-anchor': 'center',
+            'symbol-placement': 'point',
+            'text-allow-overlap': false,
+            'text-optional': true,
+            'text-max-width': 10,
+            'symbol-avoid-edges': true
+          },
+          paint: {
+            'text-color': '#FFFF00',
+            'text-halo-color': '#000000',
+            'text-halo-width': 2
+          }
+        });
 
-    map.addLayer({
-      id: 'bangunan',
-      type: 'fill-extrusion',
-      source: 'bangunan',
-      layout: {
-        'visibility': 'none'
-      },
-      paint: {
-        // Warna berdasarkan KETERANGAN
-        'fill-extrusion-color': [
-          'match',
-          ['get', 'KETERANGAN'],
-          'Gedung', '#FF0000', // Merah
-          'Tempat Tinggal', '#8B4513', // Cokelat
-          '#8B4513' // default brown untuk yang lain
-        ],
-        
-        // Tinggi berdasarkan KETERANGAN
-        'fill-extrusion-height': [
-          'match',
-          ['get', 'KETERANGAN'],
-          'Gedung', 8, // Gedung lebih tinggi
-          'Tempat Tinggal', 4, // Rumah standar
-          4 // default height
-        ],
-        
-        'fill-extrusion-base': 0,
-        'fill-extrusion-opacity': 0.8,
-        'fill-extrusion-ambient-occlusion-intensity': 0.3,
-        'fill-extrusion-ambient-occlusion-radius': 3,
-        'fill-extrusion-vertical-gradient': true
-      }
-    });
+        // === PENGGUNAAN LAHAN LAYERS (berdasarkan KETERANGAN) ===
+        map.addSource('penggunaan_lahan', {
+          type: 'geojson',
+          data: penggunaanLahanGeojson
+        });
 
-    map.addLayer({
-      id: 'bangunan_outline',
-      type: 'line',
-      source: 'bangunan',
-      layout: {
-        'visibility': 'none'
-      },
-      paint: {
-        'line-color': '#654321',
-        'line-width': 1,
-        'line-opacity': 0.6
-      }
-    });
+        map.addLayer({
+          id: 'penggunaan_lahan',
+          type: 'fill',
+          source: 'penggunaan_lahan',
+          layout: {
+            'visibility': 'none' // Default hidden
+          },
+          paint: {
+            'fill-color': [
+              'match',
+              ['get', 'KETERANGAN'], // Menggunakan field 'KETERANGAN'
+              'Hutan', '#006400',
+              'Hutan Rakyat', '#228B22',
+              'Industri dan Perdagangan', '#8B008B',
+              'Kebun Campur', '#32CD32',
+              'Lahan Terbuka (Tanah Kosong)', '#DEB887',
+              'Pekarangan', '#F0E68C',
+              'Perdagangan dan Jasa', '#FF6347',
+              'Perkebunan', '#8FBC8F',
+              'Rumput', '#7CFC00',
+              'Sawah', '#90EE90',
+              'Semak Belukar', '#9ACD32',
+              'Sungai', '#4169E1',
+              'Tegalan/Ladang', '#DAA520',
+              'Tempat Tinggal', '#FFB6C1',
+              'Transportasi', '#696969',
+              'Vegetasi Non Budidaya Lainnya', '#98FB98',
+              '#CCCCCC' // default color
+            ],
+            'fill-opacity': 0.7
+          }
+        });
 
-    // === SARANA PRASARANA LAYERS (berdasarkan KETERANGAN, di layer paling atas) ===
-    map.addSource('sarana_prasarana', {
-      type: 'geojson',
-      data: saranaPrasarana
-    });
+        map.addLayer({
+          id: 'penggunaan_lahan_stroke',
+          type: 'line',
+          source: 'penggunaan_lahan',
+          layout: {
+            'visibility': 'none'
+          },
+          paint: {
+            'line-color': '#333333',
+            'line-width': 1,
+            'line-opacity': 0.8
+          }
+        });
 
-    map.addLayer({
-      id: 'sarana_prasarana',
-      type: 'circle',
-      source: 'sarana_prasarana',
-      layout: {
-        'visibility': 'none'
-      },
-      paint: {
-        'circle-radius': [
-          'match',
-          ['get', 'KETERANGAN'],
-          'Pabrik', 12,
-          'Industri Kecil/UMKM', 8,
-          'Gudang', 10,
-          'Mushola', 7,
-          'TPS', 6,
-          8 // default radius
-        ],
-        'circle-color': [
-          'match',
-          ['get', 'KETERANGAN'],
-          'Pabrik', '#8B008B', // Ungu tua
-          'Industri Kecil/UMKM', '#FF6B6B', // Merah coral
-          'Gudang', '#708090', // Abu-abu
-          'Mushola', '#4ECDC4', // Tosca
-          'TPS', '#FFD700', // Kuning emas
-          '#FFA07A' // default color
-        ],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#FFFFFF',
-        'circle-stroke-opacity': 0.8
-      }
-    });
+        // === BANGUNAN LAYERS (3D berdasarkan KETERANGAN) ===
+        map.addSource('bangunan', {
+          type: 'geojson',
+          data: bangunanGeojson
+        });
 
-    map.addLayer({
-      id: 'sarana_prasarana_label',
-      type: 'symbol',
-      source: 'sarana_prasarana',
-      layout: {
-        'visibility': 'none',
-        'text-field': ['get', 'KETERANGAN'],
-        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-        'text-size': 9,
-        'text-anchor': 'top',
-        'text-offset': [0, 1.5],
-        'text-optional': true,
-        'text-allow-overlap': false
-      },
-      paint: {
-        'text-color': '#FFFFFF',
-        'text-halo-color': '#000000',
-        'text-halo-width': 1.5
-      }
-    });
+        map.addLayer({
+          id: 'bangunan',
+          type: 'fill-extrusion',
+          source: 'bangunan',
+          layout: {
+            'visibility': 'none'
+          },
+          paint: {
+            // Warna berdasarkan KETERANGAN
+            'fill-extrusion-color': [
+              'match',
+              ['get', 'KETERANGAN'],
+              'Gedung', '#FF0000', // Merah
+              'Tempat Tinggal', '#8B4513', // Cokelat
+              '#8B4513' // default brown untuk yang lain
+            ],
 
-    // === EVENT LISTENERS ===
-    map.on('click', 'fill_dusun', (e) => {
-      const properties = e.features[0].properties;
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="p-2">
-            <h3 class="font-bold text-sm">Dusun ${properties.DUSUN || 'Tidak diketahui'}</h3>
-            <p class="text-xs text-gray-600">Desa Sumberarum</p>
+            // Tinggi berdasarkan KETERANGAN
+            'fill-extrusion-height': [
+              'match',
+              ['get', 'KETERANGAN'],
+              'Gedung', 8, // Gedung lebih tinggi
+              'Tempat Tinggal', 4, // Rumah standar
+              4 // default height
+            ],
+
+            'fill-extrusion-base': 0,
+            'fill-extrusion-opacity': 0.8,
+            'fill-extrusion-ambient-occlusion-intensity': 0.3,
+            'fill-extrusion-ambient-occlusion-radius': 3,
+            'fill-extrusion-vertical-gradient': true
+          }
+        });
+
+        map.addLayer({
+          id: 'bangunan_outline',
+          type: 'line',
+          source: 'bangunan',
+          layout: {
+            'visibility': 'none'
+          },
+          paint: {
+            'line-color': '#654321',
+            'line-width': 1,
+            'line-opacity': 0.6
+          }
+        });
+
+        // === SARANA PRASARANA LAYERS (berdasarkan KETERANGAN, di layer paling atas) ===
+        map.addSource('sarana_prasarana', {
+          type: 'geojson',
+          data: saranaPrasarana
+        });
+
+        map.addLayer({
+          id: 'sarana_prasarana',
+          type: 'circle',
+          source: 'sarana_prasarana',
+          layout: {
+            'visibility': 'none'
+          },
+          paint: {
+            'circle-radius': [
+              'match',
+              ['get', 'KETERANGAN'],
+              'Pabrik', 12,
+              'Industri Kecil/UMKM', 8,
+              'Gudang', 10,
+              'Mushola', 7,
+              'TPS', 6,
+              8 // default radius
+            ],
+            'circle-color': [
+              'match',
+              ['get', 'KETERANGAN'],
+              'Pabrik', '#8B008B', // Ungu tua
+              'Industri Kecil/UMKM', '#FF6B6B', // Merah coral
+              'Gudang', '#708090', // Abu-abu
+              'Mushola', '#4ECDC4', // Tosca
+              'TPS', '#FFD700', // Kuning emas
+              '#FFA07A' // default color
+            ],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#FFFFFF',
+            'circle-stroke-opacity': 0.8
+          }
+        });
+
+        map.addLayer({
+          id: 'sarana_prasarana_label',
+          type: 'symbol',
+          source: 'sarana_prasarana',
+          layout: {
+            'visibility': 'none',
+            'text-field': ['get', 'KETERANGAN'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-size': 9,
+            'text-anchor': 'top',
+            'text-offset': [0, 1.5],
+            'text-optional': true,
+            'text-allow-overlap': false
+          },
+          paint: {
+            'text-color': '#FFFFFF',
+            'text-halo-color': '#000000',
+            'text-halo-width': 1.5
+          }
+        });
+
+        // === EVENT LISTENERS ===
+        map.on('click', 'fill_dusun', (e) => {
+          const properties = e.features[0].properties;
+          new mapboxgl.Popup({
+            className: 'custom-popup',
+            maxWidth: '300px'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+          <div class="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-4 rounded-lg shadow-xl">
+            <div class="flex items-center mb-3">
+              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg">Dusun ${properties.DUSUN || 'Tidak diketahui'}</h3>
+                <p class="text-blue-100 text-sm">Desa Sumberarum</p>
+              </div>
+            </div>
+            <div class="border-t border-white/30 pt-2">
+              <p class="text-xs text-blue-100">📍 Klik untuk informasi lebih lanjut</p>
+            </div>
           </div>
         `)
-        .addTo(map);
-    });
+            .addTo(map);
+        });
 
-    // Click event untuk penggunaan lahan
-    map.on('click', 'penggunaan_lahan', (e) => {
-      const properties = e.features[0].properties;
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="p-2">
-            <h3 class="font-bold text-sm">Penggunaan Lahan</h3>
-            <p class="text-xs"><strong>Jenis:</strong> ${properties.KETERANGAN || 'Tidak diketahui'}</p>
+        // Click event untuk penggunaan lahan
+        map.on('click', 'penggunaan_lahan', (e) => {
+          const properties = e.features[0].properties;
+          const getColorForLandUse = (keterangan) => {
+            const colors = {
+              'Hutan': '#006400',
+              'Hutan Rakyat': '#228B22',
+              'Industri dan Perdagangan': '#8B008B',
+              'Kebun Campur': '#32CD32',
+              'Lahan Terbuka (Tanah Kosong)': '#DEB887',
+              'Pekarangan': '#F0E68C',
+              'Perdagangan dan Jasa': '#FF6347',
+              'Perkebunan': '#8FBC8F',
+              'Rumput': '#7CFC00',
+              'Sawah': '#90EE90',
+              'Semak Belukar': '#9ACD32',
+              'Sungai': '#4169E1',
+              'Tegalan/Ladang': '#DAA520',
+              'Tempat Tinggal': '#FFB6C1',
+              'Transportasi': '#696969',
+              'Vegetasi Non Budidaya Lainnya': '#98FB98'
+            };
+            return colors[keterangan] || '#CCCCCC';
+          };
+
+          const color = getColorForLandUse(properties.KETERANGAN);
+
+          new mapboxgl.Popup({
+            className: 'custom-popup',
+            maxWidth: '320px'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+          <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-r from-green-400 to-blue-500 p-4">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center mr-3" style="background-color: ${color}">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-lg">Penggunaan Lahan</h3>
+                  <p class="text-white/80 text-sm">Informasi Detail</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-600 text-sm font-medium">Jenis Lahan:</span>
+                <span class="font-semibold text-gray-800">${properties.KETERANGAN || 'Tidak diketahui'}</span>
+              </div>
+              <div class="flex items-center text-xs text-gray-500">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg>
+                Dusun Tepungsari
+              </div>
+            </div>
           </div>
         `)
-        .addTo(map);
-    });
+            .addTo(map);
+        });
 
-    // Click event untuk sarana prasarana
-    map.on('click', 'sarana_prasarana', (e) => {
-      const properties = e.features[0].properties;
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="p-2">
-            <h3 class="font-bold text-sm">${properties.KETERANGAN || 'Sarana Prasarana'}</h3>
-            <p class="text-xs"><strong>Lokasi:</strong> Dusun Tepungsari</p>
+        // Click event untuk sarana prasarana
+        map.on('click', 'sarana_prasarana', (e) => {
+          const properties = e.features[0].properties;
+          const getIconForFacility = (keterangan) => {
+            const icons = {
+              'Pabrik': '🏭',
+              'Industri Kecil/UMKM': '🏪',
+              'Gudang': '🏬',
+              'Mushola': '🕌',
+              'TPS': '🗑️'
+            };
+            return icons[keterangan] || '🏢';
+          };
+
+          const icon = getIconForFacility(properties.KETERANGAN);
+
+          new mapboxgl.Popup({
+            className: 'custom-popup',
+            maxWidth: '350px'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+          <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
+              <div class="flex items-center">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-3 text-2xl">
+                  ${icon}
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-lg">${properties.KETERANGAN || 'Sarana Prasarana'}</h3>
+                  <p class="text-white/80 text-sm">Fasilitas Umum</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm font-medium">Kategori:</span>
+                  <span class="font-semibold text-gray-800">${properties.KETERANGAN || 'Fasilitas'}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm font-medium">Lokasi:</span>
+                  <span class="font-semibold text-gray-800">Dusun Tepungsari</span>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-gray-200">
+                <div class="flex items-center text-xs text-gray-500">
+                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Fasilitas aktif dan beroperasi
+                </div>
+              </div>
+            </div>
           </div>
         `)
-        .addTo(map);
-    });
+            .addTo(map);
+        });
 
-    // Click event untuk bangunan
-    map.on('click', 'bangunan', (e) => {
-      const properties = e.features[0].properties;
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="p-2">
-            <h3 class="font-bold text-sm">Bangunan</h3>
-            <p class="text-xs"><strong>Jenis:</strong> ${properties.KETERANGAN || 'Bangunan'}</p>
+        // Click event untuk bangunan
+        map.on('click', 'bangunan', (e) => {
+          const properties = e.features[0].properties;
+          const getBuildingHeight = (keterangan) => {
+            return keterangan === 'Gedung' ? '8 meter' : '4 meter';
+          };
+
+          const getBuildingIcon = (keterangan) => {
+            return keterangan === 'Gedung' ? '🏢' : '🏠';
+          };
+
+          const height = getBuildingHeight(properties.KETERANGAN);
+          const icon = getBuildingIcon(properties.KETERANGAN);
+
+          new mapboxgl.Popup({
+            className: 'custom-popup',
+            maxWidth: '320px'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+          <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-400 to-red-500 p-4">
+              <div class="flex items-center">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-3 text-2xl">
+                  ${icon}
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-lg">Bangunan</h3>
+                  <p class="text-white/80 text-sm">${properties.KETERANGAN || 'Struktur Bangunan'}</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm font-medium">Jenis:</span>
+                  <span class="font-semibold text-gray-800">${properties.KETERANGAN || 'Bangunan'}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm font-medium">Tinggi Estimasi:</span>
+                  <span class="font-semibold text-gray-800">${height}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm font-medium">Area:</span>
+                  <span class="font-semibold text-gray-800">Dusun Tepungsari</span>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-gray-200">
+                <div class="flex items-center text-xs text-gray-500">
+                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                  </svg>
+                  Tampilan 3D tersedia pada peta
+                </div>
+              </div>
+            </div>
           </div>
         `)
-        .addTo(map);
+            .addTo(map);
+        });
+
+        // Mouse events untuk cursor pointer
+        ['fill_dusun', 'penggunaan_lahan', 'sarana_prasarana', 'bangunan'].forEach(layerId => {
+          map.on('mouseenter', layerId, () => {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+
+          map.on('mouseleave', layerId, () => {
+            map.getCanvas().style.cursor = '';
+          });
+        });
+
+        function syncTogglesWithLayers() {
+          const mappings = [
+            { layerId: 'penggunaan_lahan', inputId: 'toggle-penggunaan-lahan' },
+            { layerId: 'sarana_prasarana', inputId: 'toggle-sarana-prasarana' },
+            { layerId: 'batas_desa', inputId: 'toggle-batas-desa' },
+            { layerId: 'batas_dusun', inputId: 'toggle-batas-dusun' },
+            { layerId: 'bangunan', inputId: 'toggle-bangunan' },
+          ];
+
+          mappings.forEach(({ layerId, inputId }) => {
+            const input = document.getElementById(inputId);
+            if (map.getLayer(layerId) && input) {
+              const vis = map.getLayoutProperty(layerId, 'visibility');
+              input.checked = vis !== 'none';
+            }
+          });
+        }
+        syncTogglesWithLayers();
+
+        console.log('All GeoJSON data loaded successfully');
+
+      } catch (error) {
+        console.error('Error loading GeoJSON data:', error);
+        alert('Error loading GeoJSON files. Please check the file paths and format.');
+      }
     });
 
-    // Mouse events
-    ['fill_dusun', 'penggunaan_lahan', 'sarana_prasarana', 'bangunan'].forEach(layerId => {
-      map.on('mouseenter', layerId, () => {
-        map.getCanvas().style.cursor = 'pointer';
+    function resetView() {
+      map.flyTo({
+        center: [110.17686322658378, -7.564867932123477],
+        zoom: 16,
+        speed: 1.5,
+        curve: 1,
+        pitch: 25
       });
+      document.getElementById('pitch-slider').value = 25;
+      document.getElementById('pitch-value').textContent = '25°';
+    }
 
-      map.on('mouseleave', layerId, () => {
-        map.getCanvas().style.cursor = '';
-      });
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const isHidden = sidebar.classList.contains('-translate-x-full');
+
+      // Toggle sidebar
+      if (isHidden) {
+        sidebar.classList.remove('-translate-x-full');
+      } else {
+        // Hanya close jika bukan di layar md ke atas
+        if (window.innerWidth < 768) {
+          sidebar.classList.add('-translate-x-full');
+        }
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      const sidebar = document.getElementById('sidebar');
+      const hamburger = document.getElementById('hamburger');
+
+      const clickedOutside = !sidebar.contains(e.target) && !hamburger.contains(e.target);
+      if (window.innerWidth < 768 && clickedOutside) {
+        sidebar.classList.add('-translate-x-full');
+      }
     });
 
-    function syncTogglesWithLayers() {
-      const mappings = [
-        { layerId: 'penggunaan_lahan', inputId: 'toggle-penggunaan-lahan' },
-        { layerId: 'sarana_prasarana', inputId: 'toggle-sarana-prasarana' },
-        { layerId: 'batas_desa', inputId: 'toggle-batas-desa' },
-        { layerId: 'batas_dusun', inputId: 'toggle-batas-dusun' },
-        { layerId: 'bangunan', inputId: 'toggle-bangunan' },
-      ];
+    function toggleLayer(layerId) {
+      if (!map.getLayer(layerId)) return;
 
-      mappings.forEach(({ layerId, inputId }) => {
-        const input = document.getElementById(inputId);
-        if (map.getLayer(layerId) && input) {
-          const vis = map.getLayoutProperty(layerId, 'visibility');
-          input.checked = vis !== 'none';
+      const visibility = map.getLayoutProperty(layerId, 'visibility');
+      const newVisibility = visibility === 'visible' ? 'none' : 'visible';
+
+      // Toggle semua layer yang terkait
+      const relatedLayers = {
+        'penggunaan_lahan': ['penggunaan_lahan', 'penggunaan_lahan_stroke'],
+        'sarana_prasarana': ['sarana_prasarana', 'sarana_prasarana_label'],
+        'bangunan': ['bangunan', 'bangunan_outline'],
+        'batas_desa': ['batas_desa', 'label_desa'],
+        'batas_dusun': ['batas_dusun', 'fill_dusun', 'label_dusun']
+      };
+
+      const layersToToggle = relatedLayers[layerId] || [layerId];
+
+      layersToToggle.forEach(layer => {
+        if (map.getLayer(layer)) {
+          map.setLayoutProperty(layer, 'visibility', newVisibility);
         }
       });
+
+      const toggleInput = document.querySelector(`input[onchange="toggleLayer('${layerId}')"]`);
+      if (toggleInput) toggleInput.checked = newVisibility === 'visible';
     }
-    syncTogglesWithLayers();
-
-    console.log('All GeoJSON data loaded successfully');
-
-  } catch (error) {
-    console.error('Error loading GeoJSON data:', error);
-    alert('Error loading GeoJSON files. Please check the file paths and format.');
-  }
-});
-
-function resetView() {
-  map.flyTo({
-    center: [110.17638245039902, -7.565652332998015],
-    zoom: 16,
-    speed: 1.5,
-    curve: 1,
-  });
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const isHidden = sidebar.classList.contains('-translate-x-full');
-
-  // Toggle sidebar
-  if (isHidden) {
-    sidebar.classList.remove('-translate-x-full');
-  } else {
-    // Hanya close jika bukan di layar md ke atas
-    if (window.innerWidth < 768) {
-      sidebar.classList.add('-translate-x-full');
-    }
-  }
-}
-
-document.addEventListener('click', function (e) {
-  const sidebar = document.getElementById('sidebar');
-  const hamburger = document.getElementById('hamburger');
-
-  const clickedOutside = !sidebar.contains(e.target) && !hamburger.contains(e.target);
-  if (window.innerWidth < 768 && clickedOutside) {
-    sidebar.classList.add('-translate-x-full');
-  }
-});
-
-function toggleLayer(layerId) {
-  if (!map.getLayer(layerId)) return;
-
-  const visibility = map.getLayoutProperty(layerId, 'visibility');
-  const newVisibility = visibility === 'visible' ? 'none' : 'visible';
-
-  // Toggle semua layer yang terkait
-  const relatedLayers = {
-    'penggunaan_lahan': ['penggunaan_lahan', 'penggunaan_lahan_stroke'],
-    'sarana_prasarana': ['sarana_prasarana', 'sarana_prasarana_label'],
-    'bangunan': ['bangunan', 'bangunan_outline'],
-    'batas_desa': ['batas_desa', 'label_desa'],
-    'batas_dusun': ['batas_dusun', 'fill_dusun', 'label_dusun']
-  };
-
-  const layersToToggle = relatedLayers[layerId] || [layerId];
-
-  layersToToggle.forEach(layer => {
-    if (map.getLayer(layer)) {
-      map.setLayoutProperty(layer, 'visibility', newVisibility);
-    }
-  });
-
-
-
-  const toggleInput = document.querySelector(`input[onchange="toggleLayer('${layerId}')"]`);
-  if (toggleInput) toggleInput.checked = newVisibility === 'visible';
-}
 
   </script>
 
